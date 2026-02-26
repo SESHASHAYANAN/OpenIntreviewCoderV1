@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepVoice — Settings</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: rgba(18, 18, 26, 0.9);
+            --text: #e8e8f0;
+            --text-dim: #8888aa;
+            --green: #00e87b;
+            --blue: #4466ff;
+            --red: #ff4466;
+            --border: rgba(255, 255, 255, 0.06);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        body::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+
+        .field {
+            margin-bottom: 14px;
+        }
+
+        .field:last-child {
+            margin-bottom: 0;
+        }
+
+        .field-label {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .field-hint {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: var(--text);
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: rgba(68, 102, 255, 0.5);
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='%238888aa' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        select option {
+            background: #1a1a2e;
+            color: var(--text);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, var(--green), var(--blue));
+            color: #000;
+        }
+
+        .btn-save:hover {
+            transform: scale(1.02);
+        }
+
+        .btn-cancel {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-danger {
+            background: rgba(255, 68, 102, 0.1);
+            color: var(--red);
+            border: 1px solid rgba(255, 68, 102, 0.2);
+        }
+
+        .btn-danger:hover {
+            background: rgba(255, 68, 102, 0.2);
+        }
+
+        .btn-test {
+            background: rgba(68, 102, 255, 0.1);
+            color: var(--blue);
+            border: 1px solid rgba(68, 102, 255, 0.2);
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .status-ok {
+            background: rgba(0, 232, 123, 0.1);
+            color: var(--green);
+        }
+
+        .status-error {
+            background: rgba(255, 68, 102, 0.1);
+            color: var(--red);
+        }
+
+        /* Icon grid */
+        .icon-grid {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-option {
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .icon-option:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .icon-option.selected {
+            border-color: var(--green);
+            background: rgba(0, 232, 123, 0.08);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>⚙️ DeepVoice Settings</h1>
+
+    <!-- API Configuration -->
+    <div class="section">
+        <div class="section-title">API Configuration</div>
+        <div class="field">
+            <div class="field-label">
+                Groq API Key
+                <span class="status-badge" id="groq-status"></span>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <input type="password" id="groq-api-key" placeholder="gsk_..." />
+                <button class="btn-test" id="btn-test-groq">Test</button>
+            </div>
+            <div class="field-hint">Get your key at <a href="https://console.groq.com"
+                    style="color:var(--blue);">console.groq.com</a></div>
+        </div>
+    </div>
+
+    <!-- Interview Settings -->
+    <div class="section">
+        <div class="section-title">Interview Settings</div>
+        <div class="field">
+            <div class="field-label">Default Mode</div>
+            <select id="interview-mode">
+                <option value="system-design">System Design</option>
+                <option value="technical-screening">Technical Screening</option>
+                <option value="dsa">DSA / Algorithms</option>
+            </select>
+        </div>
+        <div class="field">
+            <div class="field-label">Response Complexity</div>
+            <select id="response-complexity">
+                <option value="short">Short — Quick hints (5s)</option>
+                <option value="medium" selected>Medium — Explanations (15s)</option>
+                <option value="long">Long — Deep Dive (detailed)</option>
+            </select>
+        </div>
+        <div class="field">
+            <div class="field-label">Programming Language</div>
+            <select id="coding-language">
+                <option value="cpp">C++</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="javascript">JavaScript</option>
+                <option value="go">Go</option>
+                <option value="rust">Rust</option>
+            </select>
+        </div>
+        <div class="field">
+            <div class="field-label">Session Duration (minutes)</div>
+            <select id="session-duration">
+                <option value="20">20 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">60 minutes</option>
+                <option value="120">2 hours</option>
+                <option value="240" selected>4 hours</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Stealth Mode -->
+    <div class="section">
+        <div class="section-title">Stealth Mode</div>
+        <div class="field">
+            <div class="field-label">App Disguise</div>
+            <div class="icon-grid" id="icon-grid">
+                <div class="icon-option selected" data-icon="terminal" title="Terminal">💻</div>
+                <div class="icon-option" data-icon="activity" title="Activity Monitor">📊</div>
+                <div class="icon-option" data-icon="settings" title="System Settings">⚙️</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="btn-row">
+        <button class="btn btn-cancel" id="btn-cancel">Cancel</button>
+        <button class="btn btn-save" id="btn-save">Save Settings</button>
+    </div>
+
+    <div class="btn-row">
+        <button class="btn btn-danger" id="btn-quit" style="flex:none; padding:10px 20px;">Quit App</button>
+    </div>
+
+    <script>
+        const groqKeyInput = document.getElementById('groq-api-key');
+        const groqStatus = document.getElementById('groq-status');
+        const interviewMode = document.getElementById('interview-mode');
+        const responseComplexity = document.getElementById('response-complexity');
+        const codingLanguage = document.getElementById('coding-language');
+        const sessionDuration = document.getElementById('session-duration');
+
+        // Load settings
+        if (window.electronAPI) {
+            window.electronAPI.getSettings().then(settings => {
+                if (settings.codingLanguage) codingLanguage.value = settings.codingLanguage;
+                if (settings.activeSkill) interviewMode.value = settings.activeSkill;
+                if (settings.responseComplexity) responseComplexity.value = settings.responseComplexity;
+                if (settings.sessionDuration) sessionDuration.value = settings.sessionDuration;
+                if (settings.groqConfigured) {
+                    groqStatus.textContent = '✓ Connected';
+                    groqStatus.className = 'status-badge status-ok';
+                } else {
+                    groqStatus.textContent = '✗ Not configured';
+                    groqStatus.className = 'status-badge status-error';
+                }
+                // Set icon
+                document.querySelectorAll('.icon-option').forEach(opt => {
+                    opt.classList.toggle('selected', opt.dataset.icon === settings.selectedIcon);
+                });
+            });
+
+            // Also listen for load-settings from main process
+            if (window.api) {
+                window.api.receive('load-settings', (settings) => {
+                    if (settings.codingLanguage) codingLanguage.value = settings.codingLanguage;
+                    if (settings.activeSkill) interviewMode.value = settings.activeSkill;
+                });
+            }
+        }
+
+        // Test Groq connection
+        document.getElementById('btn-test-groq').addEventListener('click', async () => {
+            const key = groqKeyInput.value.trim();
+            if (!key) {
+                groqStatus.textContent = '✗ Enter a key first';
+                groqStatus.className = 'status-badge status-error';
+                return;
+            }
+
+            groqStatus.textContent = 'Testing...';
+            groqStatus.className = 'status-badge';
+
+            try {
+                await window.electronAPI.setGroqApiKey(key);
+                const result = await window.electronAPI.testGroqConnection();
+                if (result && result.success !== false) {
+                    groqStatus.textContent = '✓ Connected';
+                    groqStatus.className = 'status-badge status-ok';
+                } else {
+                    groqStatus.textContent = '✗ Failed';
+                    groqStatus.className = 'status-badge status-error';
+                }
+            } catch (e) {
+                groqStatus.textContent = '✗ Error';
+                groqStatus.className = 'status-badge status-error';
+            }
+        });
+
+        // Icon selection
+        document.querySelectorAll('.icon-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                document.querySelectorAll('.icon-option').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+            });
+        });
+
+        // Save
+        document.getElementById('btn-save').addEventListener('click', async () => {
+            const selectedIcon = document.querySelector('.icon-option.selected')?.dataset?.icon || 'terminal';
+            const apiKey = groqKeyInput.value.trim();
+
+            if (apiKey) {
+                await window.electronAPI.setGroqApiKey(apiKey);
+            }
+
+            await window.electronAPI.saveSettings({
+                codingLanguage: codingLanguage.value,
+                activeSkill: interviewMode.value,
+                responseComplexity: responseComplexity.value,
+                sessionDuration: parseInt(sessionDuration.value),
+                selectedIcon
+            });
+
+            window.electronAPI.closeWindow();
+        });
+
+        // Cancel
+        document.getElementById('btn-cancel').addEventListener('click', () => {
+            window.electronAPI.closeWindow();
+        });
+
+        // Quit
+        document.getElementById('btn-quit').addEventListener('click', () => {
+            if (window.api) window.api.send('quit-app');
+            else if (window.electronAPI) window.electronAPI.quit();
+        });
+    </script>
+</body>
+
+</html>

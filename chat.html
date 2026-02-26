@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeepVoice — Transcript</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0a0a0f;
+      --bg-glass: rgba(18, 18, 26, 0.9);
+      --text: #e8e8f0;
+      --text-dim: #8888aa;
+      --green: #00e87b;
+      --blue: #4466ff;
+      --purple: #9944ff;
+      --border: rgba(255, 255, 255, 0.06);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      -webkit-app-region: drag;
+    }
+
+    .header-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .header-badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      background: rgba(0, 232, 123, 0.1);
+      color: var(--green);
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    /* Transcript area */
+    .transcript {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .transcript::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .transcript::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .transcript::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+
+    .msg {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      max-width: 90%;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .msg-user {
+      background: rgba(68, 102, 255, 0.12);
+      border: 1px solid rgba(68, 102, 255, 0.2);
+      align-self: flex-end;
+      color: #c0c8ff;
+    }
+
+    .msg-interviewer {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      align-self: flex-start;
+      color: var(--text-dim);
+    }
+
+    .msg-whisper {
+      background: linear-gradient(135deg, rgba(0, 232, 123, 0.08), rgba(153, 68, 255, 0.08));
+      border: 1px solid rgba(0, 232, 123, 0.2);
+      align-self: flex-start;
+      color: var(--green);
+      font-style: italic;
+      position: relative;
+    }
+
+    .msg-whisper::before {
+      content: '🤫';
+      position: absolute;
+      top: -8px;
+      left: 8px;
+      font-size: 14px;
+    }
+
+    .msg-system {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      align-self: center;
+      color: var(--text-dim);
+      font-size: 11px;
+      padding: 6px 12px;
+    }
+
+    .msg-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      opacity: 0.6;
+    }
+
+    .msg-time {
+      font-size: 10px;
+      color: var(--text-dim);
+      opacity: 0.5;
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    /* Input area */
+    .input-area {
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      -webkit-app-region: no-drag;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .chat-input::placeholder {
+      color: rgba(136, 136, 170, 0.5);
+    }
+
+    .chat-input:focus {
+      border-color: rgba(68, 102, 255, 0.4);
+    }
+
+    .send-btn {
+      background: linear-gradient(135deg, var(--green), var(--blue));
+      border: none;
+      border-radius: 10px;
+      width: 40px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+
+    .send-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* Empty state */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-size: 13px;
+      text-align: center;
+      padding: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <span class="header-title">Transcript</span>
+    <span class="header-badge" id="mode-badge">System Design</span>
+  </div>
+
+  <div class="transcript" id="transcript">
+    <div class="empty-state" id="empty-state">
+      Waiting for interview to begin...<br>
+      <span style="font-size:11px; opacity:0.5; margin-top:8px;">
+        Say "Deep, help" for instant assistance
+      </span>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <input type="text" class="chat-input" id="chat-input" placeholder="Type a question or 'Deep, help'..." />
+    <button class="send-btn" id="send-btn">↑</button>
+  </div>
+
+  <script>
+    const transcript = document.getElementById('transcript');
+    const emptyState = document.getElementById('empty-state');
+    const chatInput = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
+    const modeBadge = document.getElementById('mode-badge');
+
+    function addMessage(role, text) {
+      if (emptyState) emptyState.style.display = 'none';
+
+      const msg = document.createElement('div');
+      const labelMap = {
+        user: { class: 'msg-user', label: 'YOU' },
+        interviewer: { class: 'msg-interviewer', label: 'INTERVIEWER' },
+        whisper: { class: 'msg-whisper', label: 'DEEPVOICE' },
+        system: { class: 'msg-system', label: '' }
+      };
+
+      const config = labelMap[role] || labelMap.system;
+      msg.className = 'msg ' + config.class;
+
+      const now = new Date();
+      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      msg.innerHTML = `
+        ${config.label ? '<div class="msg-label">' + config.label + '</div>' : ''}
+        <div>${text}</div>
+        <div class="msg-time">${time}</div>
+      `;
+
+      transcript.appendChild(msg);
+      transcript.scrollTop = transcript.scrollHeight;
+    }
+
+    // Send chat message
+    function sendMessage() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+
+      addMessage('user', text);
+      chatInput.value = '';
+
+      if (window.electronAPI) {
+        window.electronAPI.sendChatMessage(text);
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // Listen for events from main process
+    if (window.electronAPI) {
+      // User transcription
+      window.electronAPI.onTranscriptionReceived((event, data) => {
+        addMessage('user', data.text);
+      });
+
+      // AI whisper suggestion
+      window.electronAPI.onWhisperSuggestion((event, data) => {
+        addMessage('whisper', data.response);
+      });
+
+      // AI full response
+      window.electronAPI.onTranscriptionLlmResponse((event, data) => {
+        if (data.isTranscriptionResponse) {
+          addMessage('whisper', data.response);
+        }
+      });
+
+      // LLM response (from screenshot, etc.)
+      window.electronAPI.onLlmResponse((event, data) => {
+        addMessage('whisper', data.response);
+      });
+
+      // Session events
+      window.electronAPI.onInterviewSessionStarted((event, data) => {
+        addMessage('system', '📍 Interview session started — ' + data.mode);
+      });
+
+      window.electronAPI.onInterviewSessionEnded((event, data) => {
+        addMessage('system', '🏁 Interview session ended');
+      });
+
+      window.electronAPI.onSessionCleared((event) => {
+        transcript.innerHTML = '';
+        if (emptyState) {
+          const fresh = document.createElement('div');
+          fresh.className = 'empty-state';
+          fresh.innerHTML = 'Session cleared. Ready for next interview.';
+          transcript.appendChild(fresh);
+        }
+      });
+
+      // Mode changes
+      window.electronAPI.onInterviewModeChanged((event, data) => {
+        const names = {
+          'system-design': 'System Design',
+          'technical-screening': 'Tech Screen',
+          'dsa': 'DSA'
+        };
+        modeBadge.textContent = names[data.mode] || data.mode;
+        addMessage('system', '🔄 Switched to ' + (names[data.mode] || data.mode));
+      });
+
+      // Skill updates
+      if (window.api) {
+        window.api.receive('skill-updated', (data) => {
+          const names = {
+            'system-design': 'System Design',
+            'technical-screening': 'Tech Screen',
+            'dsa': 'DSA'
+          };
+          modeBadge.textContent = names[data.skill] || data.skill;
+        });
+      }
+    }
+
+    // Signal ready
+    if (window.electronAPI) {
+      window.electronAPI.receive('chat-window-ready', () => { });
+    }
+  </script>
+</body>
+
+</html>

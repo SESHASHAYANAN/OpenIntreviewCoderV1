@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeepVoice</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-glass: rgba(230, 235, 245, 0.55);
+      --bg-glass-hover: rgba(220, 225, 240, 0.65);
+      --text-primary: #1a1a2e;
+      --text-secondary: #3d3d5c;
+      --text-dim: #6b6b8a;
+      --accent-green: #0d9e5e;
+      --accent-blue: #3355dd;
+      --accent-purple: #7733cc;
+      --accent-red: #cc3344;
+      --accent-glow: rgba(13, 158, 94, 0.18);
+      --border: rgba(0, 0, 0, 0.08);
+      --border-light: rgba(255, 255, 255, 0.35);
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: transparent;
+      color: var(--text-primary);
+      overflow: hidden;
+      height: 100vh;
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      padding: 10px;
+      gap: 8px;
+      background: var(--bg-glass);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border-radius: var(--radius);
+      border: 1px solid var(--border-light);
+    }
+
+    /* ─── Header ─── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0 4px;
+      -webkit-app-region: drag;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-icon {
+      width: 22px;
+      height: 22px;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    .brand-name {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--text-primary);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 4px;
+      -webkit-app-region: no-drag;
+    }
+
+    .icon-btn {
+      background: rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      transition: all 0.2s;
+      -webkit-app-region: no-drag;
+    }
+
+    .icon-btn:hover {
+      background: rgba(0, 0, 0, 0.08);
+      color: var(--text-primary);
+    }
+
+    /* ─── Session Timer ─── */
+    .session-timer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.35);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+    }
+
+    .timer-display {
+      font-size: 16px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent-green);
+    }
+
+    .timer-label {
+      font-size: 9px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .timer-progress {
+      width: 40px;
+      height: 3px;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .timer-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+      border-radius: 2px;
+      transition: width 1s linear;
+      width: 0%;
+    }
+
+    /* ─── Mode Selector ─── */
+    .mode-selector {
+      display: flex;
+      gap: 3px;
+      padding: 3px;
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      -webkit-app-region: no-drag;
+    }
+
+    .mode-btn {
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-dim);
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.25s;
+      white-space: nowrap;
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .mode-btn:hover:not(.active) {
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--text-primary);
+    }
+
+    /* ─── Mic Button ─── */
+    .mic-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-app-region: no-drag;
+    }
+
+    .mic-ring {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      transition: all 0.3s;
+    }
+
+    .mic-ring.active {
+      border-color: var(--accent-green);
+      box-shadow: 0 0 24px var(--accent-glow), inset 0 0 24px var(--accent-glow);
+      animation: pulse-ring 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-ring {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.08);
+        opacity: 0.7;
+      }
+    }
+
+    .mic-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.45);
+      border: 2px solid var(--border);
+      color: var(--text-dim);
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      position: relative;
+      z-index: 2;
+      backdrop-filter: blur(8px);
+    }
+
+    .mic-btn:hover {
+      background: rgba(255, 255, 255, 0.6);
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+      transform: scale(1.03);
+    }
+
+    .mic-btn.recording {
+      background: rgba(13, 158, 94, 0.15);
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .mic-btn.mic-denied {
+      opacity: 0.5;
+      border-color: rgba(204, 51, 68, 0.4);
+      color: rgba(204, 51, 68, 0.6);
+      cursor: not-allowed;
+    }
+
+    .mic-btn.mic-denied:hover {
+      transform: none;
+      border-color: rgba(204, 51, 68, 0.5);
+      color: rgba(204, 51, 68, 0.7);
+    }
+
+    /* Waveform */
+    .waveform {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      height: 24px;
+      padding: 4px 8px;
+    }
+
+    .wave-bar {
+      width: 2px;
+      height: 6px;
+      background: var(--accent-green);
+      border-radius: 1px;
+      opacity: 0.3;
+      transition: height 0.1s;
+    }
+
+    .waveform.active .wave-bar {
+      animation: wave 0.8s ease-in-out infinite;
+      opacity: 0.8;
+    }
+
+    @keyframes wave {
+
+      0%,
+      100% {
+        height: 6px;
+      }
+
+      50% {
+        height: 18px;
+      }
+    }
+
+    .wave-bar:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .wave-bar:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+
+    .wave-bar:nth-child(3) {
+      animation-delay: 0.2s;
+    }
+
+    .wave-bar:nth-child(4) {
+      animation-delay: 0.3s;
+    }
+
+    .wave-bar:nth-child(5) {
+      animation-delay: 0.15s;
+    }
+
+    .wave-bar:nth-child(6) {
+      animation-delay: 0.25s;
+    }
+
+    .wave-bar:nth-child(7) {
+      animation-delay: 0.05s;
+    }
+
+    .wave-bar:nth-child(8) {
+      animation-delay: 0.35s;
+    }
+
+    .wave-bar:nth-child(9) {
+      animation-delay: 0.12s;
+    }
+
+    .wave-bar:nth-child(10) {
+      animation-delay: 0.22s;
+    }
+
+    .wave-bar:nth-child(11) {
+      animation-delay: 0.08s;
+    }
+
+    .wave-bar:nth-child(12) {
+      animation-delay: 0.28s;
+    }
+
+    /* ─── Status ─── */
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      transition: all 0.3s;
+    }
+
+    .status-dot.listening {
+      background: var(--accent-green);
+      box-shadow: 0 0 6px var(--accent-green);
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    .status-dot.processing {
+      background: var(--accent-blue);
+      box-shadow: 0 0 6px var(--accent-blue);
+      animation: pulse-dot 0.8s ease-in-out infinite;
+    }
+
+    .status-dot.whispering {
+      background: var(--accent-purple);
+      box-shadow: 0 0 6px var(--accent-purple);
+      animation: pulse-dot 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    /* ─── Bottom Controls ─── */
+    .bottom-controls {
+      display: flex;
+      gap: 4px;
+      width: 100%;
+      -webkit-app-region: no-drag;
+    }
+
+    .control-btn {
+      flex: 1;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-dim);
+      font-size: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.2s;
+      backdrop-filter: blur(8px);
+    }
+
+    .control-btn:hover {
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--text-primary);
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+
+    .control-btn.primary {
+      background: rgba(13, 158, 94, 0.12);
+      border-color: rgba(13, 158, 94, 0.25);
+      color: var(--accent-green);
+    }
+
+    .control-btn.primary:hover {
+      background: rgba(13, 158, 94, 0.2);
+    }
+
+    .control-btn.danger {
+      color: var(--accent-red);
+    }
+
+    .control-btn.danger:hover {
+      background: rgba(204, 51, 68, 0.1);
+      border-color: rgba(204, 51, 68, 0.25);
+    }
+
+    .control-btn.toggle-active {
+      background: rgba(13, 158, 94, 0.18);
+      border-color: rgba(13, 158, 94, 0.35);
+      color: var(--accent-green);
+      box-shadow: 0 0 8px rgba(13, 158, 94, 0.15);
+    }
+
+    .control-btn.toggle-active:hover {
+      background: rgba(13, 158, 94, 0.28);
+    }
+
+    .control-btn.auto-active {
+      background: rgba(51, 85, 221, 0.15);
+      border-color: rgba(51, 85, 221, 0.3);
+      color: var(--accent-blue);
+      box-shadow: 0 0 8px rgba(51, 85, 221, 0.12);
+      animation: pulse-auto 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-auto {
+
+      0%,
+      100% {
+        box-shadow: 0 0 8px rgba(51, 85, 221, 0.12);
+      }
+
+      50% {
+        box-shadow: 0 0 14px rgba(51, 85, 221, 0.25);
+      }
+    }
+
+    /* Transcript Box */
+    .transcript-box {
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(230, 235, 245, 0.9);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      padding: 8px 14px;
+      color: var(--text-primary);
+      font-size: 11px;
+      font-weight: 500;
+      max-width: 85%;
+      backdrop-filter: blur(16px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      z-index: 200;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .transcript-box.visible,
+    .whisper-toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .whisper-toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(13, 158, 94, 0.12);
+      border: 1px solid rgba(13, 158, 94, 0.3);
+      border-radius: 10px;
+      padding: 10px 16px;
+      color: var(--accent-green);
+      font-size: 11px;
+      font-weight: 600;
+      max-width: 280px;
+      backdrop-filter: blur(16px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      z-index: 200;
+      box-shadow: 0 4px 16px rgba(13, 158, 94, 0.1);
+    }
+
+    /* Audio recorder state */
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="brand">
+        <div class="brand-icon">🎤</div>
+        <span class="brand-name">DeepVoice</span>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="btn-chat" title="Transcript (Ctrl+Shift+C)">💬</button>
+        <button class="icon-btn" id="btn-screenshot" title="Screenshot (Ctrl+Shift+S)">📸</button>
+        <button class="icon-btn" id="btn-settings" title="Settings (Ctrl+,)">⚙️</button>
+      </div>
+    </div>
+
+    <!-- Session Timer -->
+    <div class="session-timer" id="session-timer">
+      <div>
+        <div class="timer-display" id="timer-display">240:00</div>
+        <div class="timer-label">remaining</div>
+      </div>
+      <div class="timer-progress">
+        <div class="timer-progress-bar" id="timer-progress-bar"></div>
+      </div>
+    </div>
+
+    <!-- Mode Selector -->
+    <div class="mode-selector" id="mode-selector">
+      <button class="mode-btn active" data-mode="system-design">System Design</button>
+      <button class="mode-btn" data-mode="technical-screening">Tech Screen</button>
+      <button class="mode-btn" data-mode="dsa">DSA</button>
+    </div>
+
+    <!-- Mic Button -->
+    <div class="mic-container">
+      <div class="mic-ring" id="mic-ring"></div>
+      <button class="mic-btn" id="mic-btn" title="Toggle Recording (Alt+R)">🎙️</button>
+    </div>
+
+    <!-- Waveform -->
+    <div class="waveform" id="waveform">
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+    </div>
+
+    <!-- Status -->
+    <div class="status-indicator" id="status-indicator">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Ready — say "Deep, help" anytime</span>
+    </div>
+
+    <!-- Bottom Controls -->
+    <div class="bottom-controls">
+      <button class="control-btn primary" id="btn-start-session">▶ Start</button>
+      <button class="control-btn danger hidden" id="btn-end-session">■ End</button>
+      <button class="control-btn" id="btn-follow-up" title="Follow Up (retain context between captures)">🔗 Follow
+        Up</button>
+      <button class="control-btn" id="btn-auto-capture" title="Auto-Capture (continuous screen analysis)">📸
+        Auto</button>
+      <button class="control-btn" id="btn-visibility" title="Toggle Visibility (Ctrl+Shift+V)">👁</button>
+      <button class="control-btn" id="btn-interact" title="Toggle Interaction (Alt+A)">🔒</button>
+    </div>
+  </div>
+
+  <!-- Whisper Toast -->
+  <div class="whisper-toast" id="whisper-toast"></div>
+  <div class="transcript-box" id="transcript-box"></div>
+
+  <script>
+    // ─── State ───
+    let isRecording = false;
+    let sessionActive = false;
+    let currentMode = 'system-design';
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordingInterval = null;
+
+    // ─── DOM Elements ───
+    const micBtn = document.getElementById('mic-btn');
+    const micRing = document.getElementById('mic-ring');
+    const waveform = document.getElementById('waveform');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const timerDisplay = document.getElementById('timer-display');
+    const timerProgressBar = document.getElementById('timer-progress-bar');
+    const btnStartSession = document.getElementById('btn-start-session');
+    const btnEndSession = document.getElementById('btn-end-session');
+    const whisperToast = document.getElementById('whisper-toast');
+    const transcriptBox = document.getElementById('transcript-box');
+    const btnFollowUp = document.getElementById('btn-follow-up');
+    const btnAutoCapture = document.getElementById('btn-auto-capture');
+
+    let followUpMode = false;
+    let autoCaptureEnabled = false;
+
+    // ─── Mic Button ───
+    micBtn.addEventListener('click', () => {
+      // Manual mic toggle disabled as per request: tied to Start/End buttons
+      console.log('Use Start/End buttons to manage capture session');
+      showWhisperToast('Use Start and End buttons to control audio capture');
+    });
+
+    let audioContext = null;
+    let micStream = null;
+    let desktopStream = null;
+
+    async function startRecording() {
+      try {
+        // 1. Get Local Microphone Stream
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true }
+        });
+
+        // 2. Get Desktop Audio Stream (for Remote Participants)
+        try {
+          // Fetch the system audio capture source from the main process
+          const desktopSource = await window.electronAPI.getDesktopAudioSource();
+          if (desktopSource && desktopSource.success && desktopSource.sourceId) {
+            desktopStream = await navigator.mediaDevices.getUserMedia({
+              audio: {
+                mandatory: {
+                  chromeMediaSource: 'desktop',
+                  chromeMediaSourceId: desktopSource.sourceId
+                }
+              },
+              video: {
+                mandatory: {
+                  chromeMediaSource: 'desktop',
+                  chromeMediaSourceId: desktopSource.sourceId,
+                  // Minimal video requirements since we only want audio
+                  maxWidth: 1, maxHeight: 1
+                }
+              }
+            });
+          }
+        } catch (desktopErr) {
+          console.warn('System audio capture failed (falling back to mic only):', desktopErr);
+        }
+
+        // 3. Mix Streams using Web Audio API
+        let recordStream = micStream; // default to mic
+
+        if (desktopStream && desktopStream.getAudioTracks().length > 0) {
+          audioContext = new AudioContext();
+          const dest = audioContext.createMediaStreamDestination();
+
+          // Connect Mic
+          const micSource = audioContext.createMediaStreamSource(micStream);
+          const micGain = audioContext.createGain();
+          micGain.gain.value = 1.0;
+          micSource.connect(micGain).connect(dest);
+
+          // Connect Desktop Audio
+          const desktopSource = audioContext.createMediaStreamSource(desktopStream);
+          const desktopGain = audioContext.createGain();
+          desktopGain.gain.value = 1.0;
+          desktopSource.connect(desktopGain).connect(dest);
+
+          recordStream = dest.stream;
+          console.log('Successfully mixed Mic and System Audio streams');
+        } else {
+          console.log('Recording with Mic only');
+        }
+
+        // Determine supported MIME type
+        let mimeType = 'audio/webm;codecs=opus';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'audio/webm';
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = ''; // Let the browser pick
+          }
+        }
+
+        const recorderOptions = mimeType ? { mimeType } : {};
+        mediaRecorder = new MediaRecorder(recordStream, recorderOptions);
+        audioChunks = [];
+
+        // Store active streams to stop them later
+        mediaRecorder._streamsToStop = [];
+        if (micStream) mediaRecorder._streamsToStop.push(micStream);
+        if (desktopStream) mediaRecorder._streamsToStop.push(desktopStream);
+        if (audioContext) mediaRecorder._audioContext = audioContext;
+
+        mediaRecorder.ondataavailable = async (e) => {
+          if (e.data.size > 0) {
+            // Process each chunk immediately for continuous transcription
+            try {
+              const blob = new Blob([e.data], { type: 'audio/webm' });
+              const arrayBuffer = await blob.arrayBuffer();
+              const uint8Array = new Uint8Array(arrayBuffer);
+
+              setStatus('processing', 'Processing audio...');
+
+              const result = await window.electronAPI.processAudioBlob(Array.from(uint8Array), 'webm');
+              if (result.success && result.text) {
+                setStatus('whispering', 'AI thinking...');
+              } else {
+                setStatus('listening', 'Listening...');
+              }
+            } catch (err) {
+              console.error('Audio processing error:', err);
+              setStatus('listening', 'Listening...');
+            }
+          }
+        };
+
+        // Use timeslice parameter: fires ondataavailable every 4000ms automatically
+        // This avoids the stop/restart bug — MediaRecorder stays in 'recording' state
+        mediaRecorder.start(10000);
+        isRecording = true;
+
+        micBtn.classList.add('recording');
+        micRing.classList.add('active');
+        waveform.classList.add('active');
+        setStatus('listening', 'Listening...');
+
+        window.electronAPI.startSpeechRecognition();
+      } catch (error) {
+        console.error('Mic access error:', error);
+        setStatus('idle', 'Mic access denied');
+      }
+    }
+
+    async function stopRecording() {
+      isRecording = false;
+
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+
+      // Stop all media stream tracks (mic and desktop audio)
+      if (mediaRecorder && mediaRecorder._streamsToStop) {
+        mediaRecorder._streamsToStop.forEach(stream => {
+          stream.getTracks().forEach(t => t.stop());
+        });
+      }
+
+      // Close AudioContext to free up resources
+      if (mediaRecorder && mediaRecorder._audioContext) {
+        try {
+          await mediaRecorder._audioContext.close();
+        } catch (e) {
+          console.warn('Failed to close AudioContext:', e);
+        }
+      }
+
+      mediaRecorder = null;
+      micStream = null;
+      desktopStream = null;
+      audioContext = null;
+
+      micBtn.classList.remove('recording');
+      micRing.classList.remove('active');
+      waveform.classList.remove('active');
+      setStatus('idle', 'Ready — say "Deep, help" anytime');
+
+      window.electronAPI.stopSpeechRecognition();
+    }
+
+    function setStatus(state, text) {
+      statusDot.className = 'status-dot ' + (state === 'idle' ? '' : state);
+      statusText.textContent = text;
+    }
+
+    // ─── Mode Selector ───
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        window.electronAPI.setInterviewMode(currentMode);
+      });
+    });
+
+    // ─── Session Controls ───
+    btnStartSession.addEventListener('click', async () => {
+      const result = await window.electronAPI.startInterviewSession(currentMode);
+      if (result.success) {
+        sessionActive = true;
+        btnStartSession.classList.add('hidden');
+        btnEndSession.classList.remove('hidden');
+        // Auto-start recording
+        if (!isRecording) await startRecording();
+      }
+    });
+
+    btnEndSession.addEventListener('click', async () => {
+      const result = await window.electronAPI.endInterviewSession();
+      sessionActive = false;
+      btnEndSession.classList.add('hidden');
+      btnStartSession.classList.remove('hidden');
+      if (isRecording) await stopRecording();
+      timerDisplay.textContent = '240:00';
+      timerProgressBar.style.width = '0%';
+    });
+
+    // ─── Timer Updates ───
+    if (window.electronAPI.onSessionTimerUpdate) {
+      window.electronAPI.onSessionTimerUpdate((event, data) => {
+        timerDisplay.textContent = data.remainingFormatted || '240:00';
+        timerProgressBar.style.width = (data.percentComplete || 0) + '%';
+      });
+    }
+
+    // ─── Whisper Suggestions ───
+    if (window.electronAPI.onWhisperSuggestion) {
+      window.electronAPI.onWhisperSuggestion((event, data) => {
+        showWhisperToast(data.response);
+      });
+    }
+
+    function showWhisperToast(text) {
+      whisperToast.textContent = text.length > 120 ? text.substring(0, 120) + '...' : text;
+      whisperToast.classList.add('visible');
+      // Hide transcript box if toast is shown
+      transcriptBox.classList.remove('visible');
+      setTimeout(() => whisperToast.classList.remove('visible'), 6000);
+    }
+
+    function showTranscriptBox(text) {
+      transcriptBox.textContent = '"' + text + '"';
+      transcriptBox.classList.add('visible');
+      // Auto-hide after some time
+      setTimeout(() => transcriptBox.classList.remove('visible'), 4000);
+    }
+
+    // ─── Transcription Events ───
+    if (window.electronAPI.onTranscriptionReceived) {
+      window.electronAPI.onTranscriptionReceived((event, data) => {
+        console.log('Transcription received:', data);
+        if (data && data.text) {
+          showTranscriptBox(data.text);
+        }
+      });
+    }
+
+    // ─── Recording events from main process ───
+    if (window.electronAPI.onRecordingStarted) {
+      window.electronAPI.onRecordingStarted(() => {
+        micBtn.classList.add('recording');
+        micRing.classList.add('active');
+        waveform.classList.add('active');
+      });
+    }
+
+    if (window.electronAPI.onRecordingStopped) {
+      window.electronAPI.onRecordingStopped(() => {
+        micBtn.classList.remove('recording');
+        micRing.classList.remove('active');
+        waveform.classList.remove('active');
+      });
+    }
+
+    // ─── Interview Session Events ───
+    if (window.electronAPI.onInterviewSessionEnded) {
+      window.electronAPI.onInterviewSessionEnded((event, data) => {
+        sessionActive = false;
+        btnEndSession.classList.add('hidden');
+        btnStartSession.classList.remove('hidden');
+        if (isRecording) stopRecording();
+        setStatus('idle', 'Session ended');
+      });
+    }
+
+    // ─── Header Buttons ───
+    document.getElementById('btn-chat').addEventListener('click', () => window.electronAPI.switchToChat());
+    document.getElementById('btn-screenshot').addEventListener('click', () => window.electronAPI.takeScreenshot());
+    document.getElementById('btn-settings').addEventListener('click', () => window.electronAPI.showSettings());
+    document.getElementById('btn-visibility').addEventListener('click', () => {
+      // Toggle visibility handled by shortcut
+    });
+    document.getElementById('btn-interact').addEventListener('click', async () => {
+      const stats = await window.electronAPI.getWindowStats();
+      if (stats.isInteractive) {
+        await window.electronAPI.disableWindowInteraction();
+      } else {
+        await window.electronAPI.enableWindowInteraction();
+      }
+    });
+
+    // ─── Skill change from main process ───
+    if (window.electronAPI.onSkillChanged) {
+      window.electronAPI.onSkillChanged((event, data) => {
+        currentMode = data.skill;
+        document.querySelectorAll('.mode-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.mode === data.skill);
+        });
+      });
+    }
+
+    // ─── Follow Up Toggle ───
+    btnFollowUp.addEventListener('click', async () => {
+      const result = await window.electronAPI.toggleFollowUp();
+      followUpMode = result.followUpMode;
+      btnFollowUp.classList.toggle('toggle-active', followUpMode);
+      showWhisperToast(followUpMode ? '🔗 Follow Up ON — context retained' : '🔗 Follow Up OFF — fresh context');
+    });
+
+    if (window.electronAPI.onFollowUpChanged) {
+      window.electronAPI.onFollowUpChanged((event, data) => {
+        followUpMode = data.followUpMode;
+        btnFollowUp.classList.toggle('toggle-active', followUpMode);
+      });
+    }
+
+    // ─── Auto-Capture Toggle ───
+    btnAutoCapture.addEventListener('click', async () => {
+      const result = await window.electronAPI.toggleAutoCapture();
+      autoCaptureEnabled = result.enabled;
+      btnAutoCapture.classList.toggle('auto-active', autoCaptureEnabled);
+      if (autoCaptureEnabled) {
+        showWhisperToast(`📸 Auto-Capture ON — every ${result.intervalMs / 1000}s`);
+        setStatus('processing', 'Auto-capturing...');
+      } else {
+        showWhisperToast('📸 Auto-Capture OFF');
+        if (!isRecording) setStatus('idle', 'Ready');
+      }
+    });
+
+    if (window.electronAPI.onAutoCaptureChanged) {
+      window.electronAPI.onAutoCaptureChanged((event, data) => {
+        autoCaptureEnabled = data.enabled;
+        btnAutoCapture.classList.toggle('auto-active', autoCaptureEnabled);
+      });
+    }
+  </script>
+</body>
+
+</html>

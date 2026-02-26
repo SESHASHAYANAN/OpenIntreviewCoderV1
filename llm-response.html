@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepVoice — Response</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-overlay: rgba(230, 235, 245, 0.55);
+            --bg-question: rgba(220, 225, 240, 0.50);
+            --bg-answer: rgba(240, 242, 248, 0.50);
+            --text-primary: #1a1a2e;
+            --text-secondary: #3d3d5c;
+            --text-dim: #6b6b8a;
+            --green: #0d9e5e;
+            --green-light: rgba(13, 158, 94, 0.10);
+            --blue: #3355dd;
+            --purple: #7733cc;
+            --border: rgba(0, 0, 0, 0.08);
+            --border-strong: rgba(0, 0, 0, 0.12);
+            --shadow: rgba(0, 0, 0, 0.06);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: transparent;
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            padding: 0;
+        }
+
+        /* ─── Transparent overlay container ─── */
+        .overlay-shell {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-overlay);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        /* ─── Header ─── */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(230, 235, 245, 0.50);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            -webkit-app-region: drag;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .skill-badge {
+            font-size: 11px;
+            padding: 3px 10px;
+            background: var(--green-light);
+            color: var(--green);
+            border-radius: 6px;
+            border: 1px solid rgba(13, 158, 94, 0.2);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .processing-time {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        /* ─── Complexity Tabs ─── */
+        .complexity-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            -webkit-app-region: no-drag;
+        }
+
+        .complexity-tab {
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-dim);
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .complexity-tab.active {
+            background: var(--green-light);
+            border-color: rgba(13, 158, 94, 0.3);
+            color: var(--green);
+        }
+
+        .complexity-tab:hover:not(.active) {
+            background: rgba(0, 0, 0, 0.04);
+            color: var(--text-secondary);
+        }
+
+        /* ─── Toggle Switch ─── */
+        .follow-up-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            margin-left: 12px;
+            -webkit-app-region: no-drag;
+        }
+
+        .follow-up-toggle input {
+            display: none;
+        }
+
+        .toggle-track {
+            width: 32px;
+            height: 18px;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            position: relative;
+            transition: .3s;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .toggle-knob {
+            width: 14px;
+            height: 14px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            transition: .3s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .follow-up-toggle input:checked+.toggle-track {
+            background-color: var(--green);
+        }
+
+        .follow-up-toggle input:checked+.toggle-track .toggle-knob {
+            transform: translateX(14px);
+        }
+
+        .toggle-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+        }
+
+        .follow-up-toggle input:checked~.toggle-label {
+            color: var(--green);
+        }
+
+        /* ─── Two-Column Layout ─── */
+        .two-column {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left column — question (narrow) */
+        .question-column {
+            width: 18%;
+            min-width: 140px;
+            max-width: 220px;
+            padding: 16px 14px;
+            background: var(--bg-question);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .question-column::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .question-column::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .question-column::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 2px;
+        }
+
+        .question-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .question-label::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            flex-shrink: 0;
+        }
+
+        .question-text {
+            font-size: 13px;
+            line-height: 1.55;
+            color: var(--text-secondary);
+            word-break: break-word;
+            font-weight: 400;
+        }
+
+        .question-placeholder {
+            font-size: 12px;
+            color: var(--text-dim);
+            font-style: italic;
+            opacity: 0.7;
+        }
+
+        /* Center column — answer (wide) */
+        .answer-column {
+            flex: 1;
+            padding: 20px 24px;
+            overflow-y: auto;
+            background: var(--bg-answer);
+        }
+
+        .answer-column::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .answer-column::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .answer-column::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.10);
+            border-radius: 2px;
+        }
+
+        /* ─── Response Content (Markdown) ─── */
+        .response-content {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-primary);
+        }
+
+        .response-content h1,
+        .response-content h2,
+        .response-content h3 {
+            color: var(--green);
+            margin: 16px 0 8px;
+            font-weight: 600;
+        }
+
+        .response-content h1 {
+            font-size: 18px;
+        }
+
+        .response-content h2 {
+            font-size: 16px;
+        }
+
+        .response-content h3 {
+            font-size: 14px;
+        }
+
+        .response-content p {
+            margin: 8px 0;
+            color: var(--text-secondary);
+        }
+
+        .response-content code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 0, 0, 0.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--purple);
+        }
+
+        .response-content pre {
+            background: rgba(26, 26, 46, 0.92);
+            border: 1px solid var(--border-strong);
+            border-radius: 10px;
+            padding: 14px;
+            overflow-x: auto;
+            margin: 12px 0;
+            position: relative;
+        }
+
+        .response-content pre code {
+            background: transparent;
+            padding: 0;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #e8e8f0;
+        }
+
+        .response-content ul,
+        .response-content ol {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+
+        .response-content li {
+            margin: 4px 0;
+            color: var(--text-secondary);
+        }
+
+        .response-content blockquote {
+            border-left: 3px solid var(--green);
+            padding-left: 12px;
+            margin: 12px 0;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+
+        .response-content strong {
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        .response-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+        }
+
+        .response-content th,
+        .response-content td {
+            padding: 8px 12px;
+            border: 1px solid var(--border-strong);
+            text-align: left;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .response-content th {
+            background: rgba(0, 0, 0, 0.04);
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        /* ─── Two-Part Structured Response Cards ─── */
+        .structured-response {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .response-card {
+            border-radius: 10px;
+            padding: 16px 18px;
+            border: 1px solid;
+        }
+
+        .response-card .card-header {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .part-a-card {
+            background: rgba(13, 158, 94, 0.04);
+            border-color: rgba(13, 158, 94, 0.2);
+        }
+
+        .part-a-card .card-header {
+            color: var(--green);
+        }
+
+        .part-b-card {
+            background: rgba(51, 85, 221, 0.04);
+            border-color: rgba(51, 85, 221, 0.2);
+        }
+
+        .part-b-card .card-header {
+            color: var(--blue);
+        }
+
+        .response-card .card-body {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        .response-card .card-body h1,
+        .response-card .card-body h2,
+        .response-card .card-body h3 {
+            color: var(--text-primary);
+            margin: 10px 0 6px;
+            font-weight: 600;
+        }
+
+        .response-card .card-body h2 {
+            font-size: 15px;
+        }
+
+        .response-card .card-body h3 {
+            font-size: 13px;
+        }
+
+        .response-card .card-body ul,
+        .response-card .card-body ol {
+            padding-left: 18px;
+            margin: 6px 0;
+        }
+
+        .response-card .card-body li {
+            margin: 3px 0;
+        }
+
+        .response-card .card-body strong {
+            font-weight: 600;
+        }
+
+        .part-a-card .card-body strong {
+            color: var(--green);
+        }
+
+        .part-b-card .card-body strong {
+            color: var(--blue);
+        }
+
+        .follow-up-badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 8px;
+            background: rgba(13, 158, 94, 0.1);
+            color: var(--green);
+            border-radius: 4px;
+            border: 1px solid rgba(13, 158, 94, 0.2);
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .detected-type-badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+
+        .detected-type-badge.design {
+            background: rgba(119, 51, 204, 0.1);
+            color: var(--purple);
+            border: 1px solid rgba(119, 51, 204, 0.2);
+        }
+
+        .detected-type-badge.coding {
+            background: rgba(51, 85, 221, 0.1);
+            color: var(--blue);
+            border: 1px solid rgba(51, 85, 221, 0.2);
+        }
+
+        /* ─── Loading ─── */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 12px;
+            color: var(--text-dim);
+        }
+
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ─── Copy button (inside code blocks) ─── */
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.7);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.22);
+            color: #fff;
+        }
+
+        /* ─── Actions bar ─── */
+        .actions-bar {
+            position: sticky;
+            bottom: 0;
+            padding: 8px 16px;
+            display: flex;
+            gap: 6px;
+            background: rgba(230, 235, 245, 0.50);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid var(--border);
+            -webkit-app-region: no-drag;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-dim);
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 0, 0, 0.07);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="overlay-shell">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <span class="skill-badge" id="skill-badge">System Design</span>
+                <span class="processing-time" id="processing-time"></span>
+            </div>
+            <div class="header-right" style="display: flex; align-items: center; gap: 12px;">
+                <div class="complexity-tabs">
+                    <button class="complexity-tab" data-level="short">Hint</button>
+                    <button class="complexity-tab active" data-level="medium">Explain</button>
+                    <button class="complexity-tab" data-level="long">Deep Dive</button>
+                </div>
+                <!-- Follow Up Toggle -->
+                <label class="follow-up-toggle" title="Enable Context Memory">
+                    <input type="checkbox" id="follow-up-checkbox">
+                    <div class="toggle-track">
+                        <div class="toggle-knob"></div>
+                    </div>
+                    <span class="toggle-label">Follow Up</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Two-Column Body -->
+        <div class="two-column">
+            <!-- Left: Question -->
+            <div class="question-column">
+                <div class="question-label">Question</div>
+                <div class="question-text" id="question-text">
+                    <span class="question-placeholder">Awaiting question…</span>
+                </div>
+            </div>
+
+            <!-- Center: Answer -->
+            <div class="answer-column">
+                <div class="loading" id="loading" style="display:none;">
+                    <div class="loading-spinner"></div>
+                    <span>Analyzing...</span>
+                </div>
+                <div class="response-content" id="response-content"></div>
+            </div>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="actions-bar">
+            <button class="action-btn" id="btn-copy">📋 Copy</button>
+            <button class="action-btn" id="btn-screenshot">📸 New Screenshot</button>
+            <button class="action-btn" id="btn-clear">🗑 Clear</button>
+        </div>
+    </div>
+
+    <script>
+        const responseContent = document.getElementById('response-content');
+        const loadingEl = document.getElementById('loading');
+        const skillBadge = document.getElementById('skill-badge');
+        const processingTime = document.getElementById('processing-time');
+        const questionText = document.getElementById('question-text');
+
+        // Track the last question for display
+        let lastQuestion = '';
+
+        function setQuestion(text) {
+            if (!text || text.trim() === '') return;
+            lastQuestion = text;
+            // Trim long questions but show enough context
+            const display = text.length > 300 ? text.substring(0, 300) + '…' : text;
+            questionText.innerHTML = '';
+            questionText.textContent = display;
+        }
+
+        function displayResponse(html, metadata = {}) {
+            loadingEl.style.display = 'none';
+            responseContent.innerHTML = html;
+
+            if (metadata.processingTime) {
+                processingTime.textContent = metadata.processingTime + 'ms';
+            }
+
+            // Add copy buttons to code blocks
+            responseContent.querySelectorAll('pre').forEach(pre => {
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-btn';
+                copyBtn.textContent = 'Copy';
+                copyBtn.addEventListener('click', () => {
+                    const code = pre.querySelector('code');
+                    if (code && window.electronAPI) {
+                        window.electronAPI.copyToClipboard(code.textContent);
+                        copyBtn.textContent = '✓';
+                        setTimeout(() => copyBtn.textContent = 'Copy', 1500);
+                    }
+                });
+                pre.style.position = 'relative';
+                pre.appendChild(copyBtn);
+            });
+
+            // Auto-resize window
+            requestContentResize();
+        }
+
+        function renderMarkdown(text) {
+            try {
+                if (typeof marked !== 'undefined') {
+                    return marked.parse(text);
+                }
+            } catch (e) { }
+            return text.replace(/\n/g, '<br>');
+        }
+
+        function requestContentResize() {
+            if (window.electronAPI) {
+                const height = document.body.scrollHeight;
+                const width = document.body.scrollWidth;
+                window.electronAPI.resizeLlmWindowForContent({
+                    contentHeight: height,
+                    contentWidth: width,
+                    scrollHeight: document.documentElement.scrollHeight
+                });
+            }
+        }
+
+        // Complexity tabs
+        document.querySelectorAll('.complexity-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.complexity-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                if (window.electronAPI) {
+                    window.electronAPI.setResponseComplexity(tab.dataset.level);
+                }
+            });
+        });
+
+        // Follow-Up Toggle
+        const followUpCheckbox = document.getElementById('follow-up-checkbox');
+
+        if (window.electronAPI) {
+            // Initial state
+            window.electronAPI.getFollowUpState().then(state => {
+                if (state) followUpCheckbox.checked = state.followUpMode;
+            });
+
+            // Listen for changes
+            followUpCheckbox.addEventListener('change', () => {
+                window.electronAPI.toggleFollowUp();
+            });
+
+            // Sync with other windows
+            window.electronAPI.onFollowUpChanged((event, state) => {
+                followUpCheckbox.checked = state.followUpMode;
+            });
+        }
+
+        // Actions
+        document.getElementById('btn-copy').addEventListener('click', () => {
+            if (window.electronAPI) {
+                window.electronAPI.copyToClipboard(responseContent.innerText);
+            }
+        });
+
+        document.getElementById('btn-screenshot').addEventListener('click', () => {
+            if (window.electronAPI) window.electronAPI.takeScreenshot();
+        });
+
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            responseContent.innerHTML = '';
+            processingTime.textContent = '';
+            questionText.innerHTML = '<span class="question-placeholder">Awaiting question…</span>';
+        });
+
+        // Listen for events
+        if (window.electronAPI) {
+            // Show loading
+            window.electronAPI.onShowLoading(() => {
+                loadingEl.style.display = 'flex';
+                responseContent.innerHTML = '';
+            });
+
+            // Display LLM response
+            window.electronAPI.onDisplayLlmResponse((event, data) => {
+                const content = data.content || data.response || data.text || '';
+                const skillNames = {
+                    'system-design': 'System Design',
+                    'technical-screening': 'Tech Screen',
+                    'dsa': 'DSA'
+                };
+                skillBadge.textContent = skillNames[data.skill] || data.skill || data.metadata?.skill || 'AI';
+
+                // Set question from data if available
+                if (data.question || data.prompt || data.query || data.ocrText || data.extractedText) {
+                    setQuestion(data.question || data.prompt || data.query || data.ocrText || data.extractedText);
+                }
+
+                // Check for structured two-part response
+                if (data.isStructuredResponse && (data.partA || data.partB)) {
+                    const partAHtml = data.partA ? renderMarkdown(data.partA) : '';
+                    const partBHtml = data.partB ? renderMarkdown(data.partB) : '';
+
+                    let headerExtra = '';
+                    if (data.detectedType) {
+                        headerExtra += `<span class="detected-type-badge ${data.detectedType}">${data.detectedType === 'design' ? '🏗️ Design' : '💻 Coding'}</span>`;
+                    }
+                    if (data.isFollowUp) {
+                        headerExtra += `<span class="follow-up-badge">🔗 Follow-up</span>`;
+                    }
+
+                    const structuredHtml = `
+                        <div class="structured-response">
+                            ${partAHtml ? `
+                            <div class="response-card part-a-card">
+                                <div class="card-header">🎯 What to Say ${headerExtra}</div>
+                                <div class="card-body response-content">${partAHtml}</div>
+                            </div>` : ''}
+                            ${partBHtml ? `
+                            <div class="response-card part-b-card">
+                                <div class="card-header">📋 Solution Details</div>
+                                <div class="card-body response-content">${partBHtml}</div>
+                            </div>` : ''}
+                        </div>
+                    `;
+
+                    displayResponse(structuredHtml, data.metadata || {});
+                } else {
+                    // Fallback to standard single-column rendering
+                    const html = renderMarkdown(content);
+                    displayResponse(html, data.metadata || {});
+                }
+            });
+
+            // Also listen for general LLM response
+            window.electronAPI.onLlmResponse((event, data) => {
+                const content = data.content || data.response || data.text || '';
+                const html = renderMarkdown(content);
+                skillBadge.textContent = data.skill || data.metadata?.skill || 'AI';
+
+                // Set question from data if available
+                if (data.question || data.prompt || data.query || data.ocrText) {
+                    setQuestion(data.question || data.prompt || data.query || data.ocrText);
+                }
+
+                displayResponse(html, data.metadata || {});
+            });
+
+            // Whisper suggestions (show in a more concise format)
+            window.electronAPI.onWhisperSuggestion((event, data) => {
+                if (data.question || data.prompt || data.query) {
+                    setQuestion(data.question || data.prompt || data.query);
+                }
+
+                const html = `<div style="border-left: 3px solid var(--green); padding-left: 12px; font-style: italic; color: var(--green);">
+          ${renderMarkdown(data.response || '')}
+        </div>`;
+                displayResponse(html, data.metadata || {});
+            });
+
+            // Skill changes
+            window.electronAPI.onSkillChanged((event, data) => {
+                const names = {
+                    'system-design': 'System Design',
+                    'technical-screening': 'Tech Screen',
+                    'dsa': 'DSA'
+                };
+                skillBadge.textContent = names[data.skill] || data.skill;
+            });
+
+            // Complexity changes
+            window.electronAPI.onComplexityChanged((event, data) => {
+                document.querySelectorAll('.complexity-tab').forEach(t => {
+                    t.classList.toggle('active', t.dataset.level === data.level);
+                });
+            });
+
+            // Error handling
+            window.electronAPI.onLlmError((event, data) => {
+                displayResponse(`<div class="error" style="color:#cc3344; padding:20px;">${data.error || 'Unknown error'}</div>`);
+            });
+        }
+
+        // Global error handler
+        window.onerror = function (msg, url, line, col, error) {
+            console.error('Window error:', msg, error);
+            if (responseContent) {
+                responseContent.innerHTML += `<div style="color:#cc3344; font-size:10px; margin-top:20px;">Renderer Error: ${msg}</div>`;
+            }
+        };
+    </script>
+</body>
+
+</html>
