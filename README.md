@@ -10,7 +10,7 @@
 
 ## About
 
-**OpenIntreview Coder** is a desktop application designed to help developers during technical interviews. It combines screen analysis, voice interaction, and AI-powered code generation into a single lightweight tool.
+** OpenInterview Coder** is a desktop application designed to help developers during technical interviews. It combines screen analysis, voice interaction, and AI-powered code generation into a single lightweight tool.
 
 Built on **Electron** and powered by **Google Gemini**, it runs locally on your machine with full privacy — no telemetry, no data collection.
 
