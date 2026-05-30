@@ -1,4 +1,4 @@
-# OpenIntreview Coder
+# OpenInterview Coder
 
 > Your AI-powered interview preparation and real-time coding assistant.
 
